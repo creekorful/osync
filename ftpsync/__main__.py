@@ -57,14 +57,15 @@ def main():
     Main entry-point
     """
     # Configure parser
-    parser = argparse.ArgumentParser(
-        description='Synchronize efficiently source directory to destination directory.')
+    parser = argparse.ArgumentParser(prog='ftpsync',
+                                     description='Synchronize efficiently source directory to destination directory.')
     parser.add_argument('src', type=str,
                         help='the source directory to be synchronized')
     parser.add_argument('dst', type=str,
                         help='the destination directory where files should be synchronized')
     parser.add_argument('--skip-upload', dest='skip_upload', type=bool,
                         help='do not upload files, only generate index')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
     args = parser.parse_args()
 
     # Bind variables
