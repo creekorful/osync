@@ -58,7 +58,8 @@ def main():
     """
     # Configure parser
     parser = argparse.ArgumentParser(prog='ftpsync',
-                                     description='Synchronize efficiently source directory to destination directory.')
+                                     description='Synchronize efficiently source directory'
+                                                 ' to destination directory.')
     parser.add_argument('src', type=str,
                         help='the source directory to be synchronized')
     parser.add_argument('dst', type=str,
