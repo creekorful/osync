@@ -2,11 +2,12 @@
 ftpsync is the main module
 containing core logic
 """
-import argparse
 import logging
 import os
 import sys
 from urllib.parse import urlparse
+
+import click
 
 from ftpsync import ftp as ftputil
 from ftpsync import index
@@ -52,35 +53,24 @@ def process_deleted_files(ftp: ftputil.FtpSession, files: list):
         ftp.delete(file)
 
 
-def main():
-    """
-    Main entry-point
-    """
-    # Configure parser
-    parser = argparse.ArgumentParser(prog='ftpsync',
-                                     description='Synchronize efficiently source directory'
-                                                 ' to destination directory.')
-    parser.add_argument('src', type=str,
-                        help='the source directory to be synchronized')
-    parser.add_argument('dst', type=str,
-                        help='the destination directory where files should be synchronized')
-    parser.add_argument('--skip-upload', dest='skip_upload', type=bool,
-                        help='do not upload files, only generate index')
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
-    args = parser.parse_args()
+@click.command()
+@click.argument('src')
+@click.argument('dst', required=False)
+@click.option('--skip-sync', is_flag=True, flag_value=True, help='do not synchronize files, only generate index')
+@click.version_option('1.0.0')
+def main(src, dst, skip_sync):
+    """Synchronize efficiently LOT of files to FTP server."""
 
-    # Bind variables
-    src_path = "{}/".format(args.src) if not args.src.endswith('/') else args.src
-    dst = urlparse("ftp://{}".format(args.dst) if not args.dst.startswith('ftp://') else args.dst)
+    src = "{}/".format(src) if not src.endswith('/') else src
 
     # Configure logging
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
     # Create index file if needed
-    index_file_path = os.path.join(src_path, index.INDEX_FILE)
+    index_file_path = os.path.join(src, index.INDEX_FILE)
     if not os.path.exists(index_file_path):
         logging.debug("%s file not found in source directory. Creating one.", index.INDEX_FILE)
-        logging.info("This is the first upload of %s to %s%s", src_path, dst.hostname, dst.path)
+        logging.info("This is the first upload of %s to %s%s", src, dst.hostname, dst.path)
         open(index_file_path, 'w').close()
 
     # Load previous index
@@ -88,16 +78,18 @@ def main():
     logging.debug("Checksum of %d files loaded.", len(previous_index))
 
     # Compute current index
-    current_index = index.compute_index(src_path)
+    current_index = index.compute_index(src)
     logging.debug("Checksum of %d files computed.", len(current_index))
 
-    # If we only want to generate index, skip the rest
-    if args.skip_upload:
-        logging.info("Generating index file for %s (skipping upload)", src_path)
+    # If we only want to generate index, skip the sync
+    if skip_sync:
+        logging.info("Generating index file for %s (skipping synchronization)", src)
         index.save_index(index_file_path, current_index)
         sys.exit(0)
 
-    logging.info("Synchronizing %s to %s%s", src_path, dst.hostname, dst.path)
+    dst = urlparse("ftp://{}".format(dst) if not dst.startswith('ftp://') else dst)
+
+    logging.info("Synchronizing %s to %s%s", src, dst.hostname, dst.path)
 
     # Compute the difference
     changed_files, deleted_files = index.diff_index(previous_index, current_index)
@@ -116,7 +108,7 @@ def main():
         sys.exit(1)
 
     # First of all upload changed files (new/changed)
-    process_changed_files(ftp_session, changed_files, src_path)
+    process_changed_files(ftp_session, changed_files, src)
 
     # Then delete deleted files
     process_deleted_files(ftp_session, deleted_files)
@@ -126,4 +118,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(prog_name='ftpsync.py')
