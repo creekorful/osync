@@ -59,7 +59,7 @@ class FtpSession:
             next_dir = os.path.join(current_dir, directory)
             if not self.directory_exists(current_dir, directory):
                 self.ftp.mkd(next_dir)
-                current_dir = next_dir
+            current_dir = next_dir
 
     def delete(self, file):
         """
