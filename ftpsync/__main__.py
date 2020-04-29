@@ -70,7 +70,6 @@ def main(src, dst, skip_sync):
     index_file_path = os.path.join(src, index.INDEX_FILE)
     if not os.path.exists(index_file_path):
         logging.debug("%s file not found in source directory. Creating one.", index.INDEX_FILE)
-        logging.info("This is the first upload of %s to %s%s", src, dst.hostname, dst.path)
         open(index_file_path, 'w').close()
 
     # Load previous index
@@ -86,6 +85,10 @@ def main(src, dst, skip_sync):
         logging.info("Generating index file for %s (skipping synchronization)", src)
         index.save_index(index_file_path, current_index)
         sys.exit(0)
+
+    if dst is None:
+        logging.error('Argument \'DST\' is required.')
+        exit(1)
 
     dst = urlparse("ftp://{}".format(dst) if not dst.startswith('ftp://') else dst)
 
