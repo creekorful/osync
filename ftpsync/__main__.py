@@ -57,7 +57,7 @@ def process_deleted_files(ftp: ftputil.FtpSession, files: list):
 @click.argument('src')
 @click.argument('dst', required=False)
 @click.option('--skip-sync', is_flag=True, flag_value=True, help='do not synchronize files, only generate index')
-@click.version_option('1.0.0')
+@click.version_option('1.1.0')
 def main(src, dst, skip_sync):
     """Synchronize efficiently LOT of files to FTP server."""
 
