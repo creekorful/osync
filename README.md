@@ -5,7 +5,16 @@ Designed for one-to-one (simplex) communication.
 
 # Usage
 
-``python -m ftpsync [-h] [--skip-upload SKIP_UPLOAD] src dst``
+```
+Usage: ftpsync.py [OPTIONS] SRC [DST]
+
+  Synchronize efficiently LOT of files to FTP server.
+
+Options:
+  --skip-sync  do not synchronize files, only generate index
+  --version    Show the version and exit.
+  --help       Show this message and exit.
+```
 
 # How does it work?
 
