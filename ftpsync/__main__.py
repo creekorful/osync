@@ -8,6 +8,7 @@ import sys
 from urllib.parse import urlparse
 
 import click
+import progressbar
 
 from ftpsync import ftp as ftputil
 from ftpsync import index
@@ -20,17 +21,12 @@ def process_changed_files(ftp: ftputil.FtpSession, files: list, src_path: str):
     :param files: files to be uploaded
     :param src_path: local src path (if any)
     """
-    current_files = 0
-    total_files = len(files)
-    for file in files:
-        current_files += 1
-
+    for file in progressbar.progressbar(files, redirect_stdout=True):
         # make any missing directories (if any)
         if os.sep in file:
             ftp.make_directories(file)
 
-        logging.debug("Uploading file %s (%d/%d)",
-                      file, current_files, total_files)
+        print("[+] {}".format(file))
 
         # Upload the file
         ftp.upload(file, open("{}{}".format(src_path, file), 'rb'))
@@ -42,14 +38,8 @@ def process_deleted_files(ftp: ftputil.FtpSession, files: list):
     :param ftp: the opened FTP client
     :param files: files to be deleted
     """
-    current_files = 0
-    total_files = len(files)
-    for file in files:
-        current_files += 1
-
-        logging.debug("Deleting file %s (%d/%d)",
-                      file, current_files, total_files)
-
+    for file in progressbar.ProgressBar(files, redirect_stdout=True):
+        print("[-] {}".format(file))
         ftp.delete(file)
 
 
