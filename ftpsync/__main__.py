@@ -101,10 +101,12 @@ def main(src, dst, skip_sync):
         sys.exit(1)
 
     # First of all upload changed files (new/changed)
-    process_changed_files(ftp_session, changed_files, src)
+    if len(changed_files) != 0:
+        process_changed_files(ftp_session, changed_files, src)
 
     # Then delete deleted files
-    process_deleted_files(ftp_session, deleted_files)
+    if len(deleted_files) != 0:
+        process_deleted_files(ftp_session, deleted_files)
 
     # Save current index
     index.save_index(index_file_path, current_index)
