@@ -16,9 +16,7 @@ pub trait Sync {
 }
 
 /// A synchronizer which save by FTP.
-pub struct FtpSync {
-    ftp_session: FtpStream,
-}
+pub struct FtpSync {}
 
 impl Sync for FtpSync {
     fn synchronize<P: AsRef<Path>>(

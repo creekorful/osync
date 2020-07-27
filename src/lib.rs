@@ -1,2 +1,2 @@
-mod index;
-mod sync;
+pub mod index;
+pub mod sync;

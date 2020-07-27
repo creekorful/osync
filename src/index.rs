@@ -106,4 +106,8 @@ impl Index {
 
         (changed_files, deleted_files)
     }
+
+    pub fn len(&self) -> usize {
+        self.files.len()
+    }
 }
