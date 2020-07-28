@@ -1,0 +1,18 @@
+[package]
+name = "osync"
+version = "1.2.0"
+authors = ["Aloïs Micard <alois@micard.lu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+md5 = "0.7.0"
+ftp = "3.0.1"
+clap = "2.33.1"
+walkdir = "2.3.1"
+url = "2.1.1"
+indicatif = "0.15.0"
+
+[dev-dependencies]
+tempdir = "0.3.7"

@@ -1,24 +1,52 @@
-# ftpsync
+# osync
 
-Tool to synchronize in a effective/optimized way a **LOT** of files to an FTP server.
-Designed for one-to-one (simplex) communication.
+Tool to synchronize in a optimized way a **LOT** of files to a FTP server.
 
-# Usage
+## Why
+
+One day I neded to upload >500,000 files to a remote FTP server (with lftp).
+it was slow and tedious (as expected considering the number of files).
+
+Sadly further uploads were really slow too. The mirroring mode of lftp
+wasn't really helpful considering the huge amount of directories / files involved.
+
+That's why I have developed osync (previously ftpsync):
+to help user uplodad huge amount of files in a convenient way.
+
+## How
+
+Osync use a local cache to assume the server state. Each time you upload something,
+it will read the cache to determinate which file has changed / has been deleted, etc...
+this is **WAY** faster than trying to determinate on the server wich file should be uploaded.
+
+Please note that this software **SET** the server state using current state. If you have done upload on a computer 'A',
+and run the script from a computer 'B', everything will be replaced to make the server looks like 'B'.
+
+This could be a problem depending on your use case.  
+
+## How to install
+
+You can install the latest version of osync using cargo
+
+```sh
+cargo install osync
+```
+
+## How to use it
 
 ```
-Usage: ftpsync.py [OPTIONS] SRC [DST]
+osync 1.2.0
+Aloïs Micard <alois@micard.lu>
+Synchronize efficiently LOT of files to FTP server
 
-  Synchronize efficiently LOT of files to FTP server.
+USAGE:
+    osync <SRC> <DST>
 
-Options:
-  --skip-sync  do not synchronize files, only generate index
-  --version    Show the version and exit.
-  --help       Show this message and exit.
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+ARGS:
+    <SRC>    The source directory.
+    <DST>    The destination. (f.e: ftp://user:pass@ftp.example.org/test-folder)
 ```
-
-# How does it work?
-
-The first time you'll run ftpsync, it will generate a local cache of the assumed server state after upload is completed.
-Next calls will use the cache to only upload new/changed files, and delete old ones.
-
-This will largely decrease upload duration when there's a larger number of files involved. 
