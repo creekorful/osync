@@ -1,6 +1,6 @@
 [package]
 name = "osync"
-version = "0.1.0"
+version = "1.2.0"
 authors = ["Aloïs Micard <alois@micard.lu>"]
 edition = "2018"
 
@@ -12,3 +12,7 @@ ftp = "3.0.1"
 clap = "2.33.1"
 walkdir = "2.3.1"
 url = "2.1.1"
+indicatif = "0.15.0"
+
+[dev-dependencies]
+tempdir = "0.3.7"

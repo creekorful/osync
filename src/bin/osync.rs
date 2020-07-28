@@ -1,6 +1,6 @@
 use std::process;
 
-use clap::{crate_authors, crate_version, App, Arg};
+use clap::{crate_authors, crate_version, App, AppSettings, Arg};
 use url::Url;
 
 use osync::index::Index;
@@ -10,16 +10,27 @@ fn main() {
     let matches = App::new("osync")
         .version(crate_version!())
         .author(crate_authors!())
-        .about("Synchronize efficiently LOT of files to remote server")
-        .arg(Arg::with_name("src").value_name("SRC"))
-        .arg(Arg::with_name("dst").value_name("DST"))
+        .about("Synchronize efficiently LOT of files to FTP server")
+        .arg(
+            Arg::with_name("src")
+                .value_name("SRC")
+                .required(true)
+                .help("The source directory."),
+        )
+        .arg(
+            Arg::with_name("dst")
+                .value_name("DST")
+                .required(true)
+                .help("The destination. (f.e: ftp://user:pass@ftp.example.org/test-folder)"),
+        )
+        .setting(AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
     let src = matches.value_of("src").unwrap();
     let dst = match matches.value_of("dst").map(|v| Url::parse(v)).unwrap() {
         Ok(url) => url,
         Err(e) => {
-            eprintln!("invalid src: {}", e);
+            eprintln!("invalid dst: {}", e);
             process::exit(1);
         }
     };
@@ -36,7 +47,10 @@ fn main() {
 
     // Compute current index
     let current_index = match Index::compute(src) {
-        Ok(index) => index,
+        Ok((index, ignored_files)) => {
+            println!("({} files ignored)", ignored_files);
+            index
+        }
         Err(e) => {
             eprintln!("error while computing index: {}", e);
             process::exit(1);
@@ -46,8 +60,8 @@ fn main() {
 
     // Synchronize the files
     let synchronizer = FtpSync {};
-    match synchronizer.synchronize(&previous_index, &current_index, &dst) {
-        Ok(_) => println!("todo"),
+    match synchronizer.synchronize(&current_index, &previous_index, &dst) {
+        Ok(_) => println!("Synchronization successful!"),
         Err(e) => {
             eprintln!("error while synchronizing files: {}", e);
             process::exit(1);
