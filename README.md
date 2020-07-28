@@ -34,6 +34,12 @@ You can install the latest version of osync using cargo
 cargo install osync
 ```
 
+Or with [snap](https://snapcraft.io).
+
+```sh
+snap install osync --classic
+```
+
 ## How to use it
 
 ```
