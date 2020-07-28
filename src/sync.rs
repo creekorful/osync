@@ -10,7 +10,13 @@ use url::Url;
 use crate::index::Index;
 
 pub trait Sync {
-    fn synchronize(&self, a: &Index, b: &Index, dst: &Url) -> Result<(), Box<dyn Error>>;
+    fn synchronize(
+        &self,
+        a: &Index,
+        b: &Index,
+        dst: &Url,
+        dry_run: bool,
+    ) -> Result<(), Box<dyn Error>>;
 }
 
 /// A synchronizer which save by FTP.
@@ -22,11 +28,16 @@ impl Sync for FtpSync {
         current_index: &Index,
         previous_index: &Index,
         dst: &Url,
+        dry_run: bool,
     ) -> Result<(), Box<dyn Error>> {
         // compute diff
         let (changed_files, deleted_files) = previous_index.diff(current_index);
         println!("-> {} files changed", changed_files.len());
         println!("-> {} files deleted", deleted_files.len());
+
+        if dry_run {
+            return Ok(());
+        }
 
         // open FTP connection
         let address = format!(

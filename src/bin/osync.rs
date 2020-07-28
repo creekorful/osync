@@ -23,6 +23,11 @@ fn main() {
                 .required(true)
                 .help("The destination. (f.e: ftp://user:pass@ftp.example.org/test-folder)"),
         )
+        .arg(
+            Arg::with_name("dry-run")
+                .long("dry-run")
+                .help("Simulation mode: do not upload files nor update index"),
+        )
         .setting(AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
@@ -34,6 +39,7 @@ fn main() {
             process::exit(1);
         }
     };
+    let dry_run = matches.is_present("dry-run");
 
     // Read previous index (if any)
     let previous_index = match Index::load(src) {
@@ -60,8 +66,14 @@ fn main() {
 
     // Synchronize the files
     let synchronizer = FtpSync {};
-    match synchronizer.synchronize(&current_index, &previous_index, &dst) {
-        Ok(_) => println!("Synchronization successful!"),
+    match synchronizer.synchronize(&current_index, &previous_index, &dst, dry_run) {
+        Ok(_) => {
+            if dry_run {
+                println!("Synchronization successful! (dry-run)")
+            } else {
+                println!("Synchronization successful!")
+            }
+        }
         Err(e) => {
             eprintln!("error while synchronizing files: {}", e);
             process::exit(1);
