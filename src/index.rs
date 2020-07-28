@@ -15,7 +15,7 @@ pub struct Index {
 }
 
 impl Index {
-    /// Create a blank index for the given directory
+    /// Create a blank index for the given directory.
     fn blank<P: AsRef<Path>>(directory: P) -> Index {
         Index {
             directory: directory.as_ref().to_path_buf(),
@@ -24,7 +24,7 @@ impl Index {
     }
 
     /// Try to load the cached index for given directory
-    /// this will either return the loaded index or a new blank one
+    /// this will either return the loaded index or a new blank one.
     pub fn load<P: AsRef<Path>>(directory: P) -> Result<Index, Box<dyn Error>> {
         let index_path = directory.as_ref().join(INDEX_FILE);
 
@@ -49,7 +49,7 @@ impl Index {
         })
     }
 
-    /// Compute the index for given directory
+    /// Compute the index for given directory.
     pub fn compute<P: AsRef<Path>>(directory: P) -> Result<Index, Box<dyn Error>> {
         let mut files: HashMap<String, String> = HashMap::new();
         for entry in WalkDir::new(&directory).into_iter().filter_map(|e| e.ok()) {
@@ -73,7 +73,7 @@ impl Index {
         })
     }
 
-    /// Save the index to the disk
+    /// Save the index to the disk.
     pub fn save(&self) -> Result<(), Box<dyn Error>> {
         let mut file = File::create(self.directory.join(INDEX_FILE))?;
 
@@ -87,27 +87,38 @@ impl Index {
     }
 
     /// Compute the difference between the indexes self & b
-    /// return the changed files (new, modified) and the deleted
-    pub fn diff(&self, b: &Index) -> (HashMap<String, String>, HashMap<String, String>) {
-        let mut changed_files: HashMap<String, String> = HashMap::new();
-        let mut deleted_files: HashMap<String, String> = HashMap::new();
+    /// return the changed files (new, modified) and the deleted.
+    pub fn diff(&self, b: &Index) -> (Vec<String>, Vec<String>) {
+        let mut changed_files: Vec<String> = Vec::new();
+        let mut deleted_files: Vec<String> = Vec::new();
 
         for (path, hash) in &b.files {
             if self.files.get(path).is_none() || self.files.get(path).unwrap() != hash {
-                changed_files.insert(path.to_string(), hash.to_string());
+                changed_files.push(path.to_string());
             }
         }
 
         for (path, hash) in &self.files {
             if !b.files.contains_key(path) {
-                deleted_files.insert(path.to_string(), hash.to_string());
+                deleted_files.push(path.to_string());
             }
         }
 
         (changed_files, deleted_files)
     }
 
+    /// Returns the number of files in the index.
     pub fn len(&self) -> usize {
         self.files.len()
+    }
+
+    /// Returns `true` if the index contains no files.
+    pub fn is_empty(&self) -> bool {
+        self.files.is_empty()
+    }
+
+    /// Returns the path which the index is computed for.
+    pub fn path(&self) -> PathBuf {
+        self.directory.clone()
     }
 }

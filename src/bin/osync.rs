@@ -1,28 +1,28 @@
 use std::process;
 
 use clap::{crate_authors, crate_version, App, Arg};
+use url::Url;
 
 use osync::index::Index;
+use osync::sync::{FtpSync, Sync};
 
 fn main() {
     let matches = App::new("osync")
         .version(crate_version!())
         .author(crate_authors!())
-        .about("Synchronize efficientlyc LOT of files to remote server")
-        .arg(
-            Arg::with_name("src")
-                .value_name("SRC")
-                .help("Sets a custom config file"),
-        )
-        .arg(
-            Arg::with_name("dst")
-                .value_name("DST")
-                .help("Sets the input file to use"),
-        )
+        .about("Synchronize efficiently LOT of files to remote server")
+        .arg(Arg::with_name("src").value_name("SRC"))
+        .arg(Arg::with_name("dst").value_name("DST"))
         .get_matches();
 
     let src = matches.value_of("src").unwrap();
-    let dst = matches.values_of("dst").unwrap();
+    let dst = match matches.value_of("dst").map(|v| Url::parse(v)).unwrap() {
+        Ok(url) => url,
+        Err(e) => {
+            eprintln!("invalid src: {}", e);
+            process::exit(1);
+        }
+    };
 
     // Read previous index (if any)
     let previous_index = match Index::load(src) {
@@ -43,4 +43,14 @@ fn main() {
         }
     };
     println!("Index of {} files computed", current_index.len());
+
+    // Synchronize the files
+    let synchronizer = FtpSync {};
+    match synchronizer.synchronize(&previous_index, &current_index, &dst) {
+        Ok(_) => println!("todo"),
+        Err(e) => {
+            eprintln!("error while synchronizing files: {}", e);
+            process::exit(1);
+        }
+    }
 }
