@@ -1,8 +1,11 @@
 [package]
 name = "osync"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["Aloïs Micard <alois@micard.lu>"]
 edition = "2018"
+description = "Tool to synchronize in a optimized way a LOT of files to a FTP server"
+license = "GPL-3.0"
+repository = "https://github.com/creekorful/osync"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
