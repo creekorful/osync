@@ -1,5 +1,7 @@
 # osync
 
+![Crates.io](https://img.shields.io/crates/v/osync)
+
 Tool to synchronize in a optimized way a **LOT** of files to a FTP server.
 
 ## Why
