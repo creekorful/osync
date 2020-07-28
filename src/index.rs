@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 
+use sha1::Digest;
 use walkdir::WalkDir;
 
 const INDEX_FILE: &str = ".osync";
@@ -67,11 +68,13 @@ impl Index {
 
             if metadata.is_file() && !ignored_files.contains_key(local_path.to_str().unwrap()) {
                 let bytes = fs::read(entry.path()).expect("unable to read file");
-                let digest = md5::compute(bytes);
+
+                let mut hasher = sha1::Sha1::new();
+                hasher.update(bytes);
 
                 files.insert(
                     local_path.to_str().unwrap().to_string(),
-                    format!("{:x}", digest),
+                    format!("{:x}", hasher.finalize()),
                 );
             }
         }
@@ -150,7 +153,7 @@ mod tests {
 
     use tempdir::TempDir;
 
-    use crate::index::{Index, IGNORE_FILE, INDEX_FILE};
+    use crate::index::{IGNORE_FILE, Index, INDEX_FILE};
 
     #[test]
     fn test_blank() {
@@ -194,7 +197,7 @@ mod tests {
         let (index, _) = Index::compute(&dir).expect("unable to compute index");
         assert_eq!(index.len(), 1);
         assert_eq!(index.is_empty(), false);
-        assert_eq!(index["test"], "5d41402abc4b2a76b9719d911017c592");
+        assert_eq!(index["test"], "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d");
 
         // create a .osyncignore
         fs::write(dir.path().join(IGNORE_FILE), "test\n").expect("unable to write ignore file");
@@ -214,7 +217,7 @@ mod tests {
         // create dummy index
         fs::write(
             dir.path().join(INDEX_FILE),
-            "test:5d41402abc4b2a76b9719d911017c592",
+            "test:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d",
         )
         .expect("unable to write index");
 
