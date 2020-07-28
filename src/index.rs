@@ -153,7 +153,7 @@ mod tests {
 
     use tempdir::TempDir;
 
-    use crate::index::{IGNORE_FILE, Index, INDEX_FILE};
+    use crate::index::{Index, IGNORE_FILE, INDEX_FILE};
 
     #[test]
     fn test_blank() {

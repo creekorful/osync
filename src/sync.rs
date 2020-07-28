@@ -96,10 +96,11 @@ impl FtpSync {
             let parent = p.parent().unwrap().to_str().unwrap();
 
             // create any missing directories (recursively)
-            if !existing_directories.contains_key(parent) {
-                self.make_directories(session, &format!("{}/{}", remote_dir, parent))?;
-                existing_directories.insert(parent.to_string(), true);
-            }
+            self.make_directories(
+                session,
+                &mut existing_directories,
+                &format!("{}/{}", remote_dir, parent),
+            )?;
 
             // store the file on the server
             let mut content = File::open(local_dir.as_ref().join(path))?;
@@ -130,14 +131,26 @@ impl FtpSync {
         Ok(())
     }
 
-    fn make_directories(&self, session: &mut FtpStream, path: &str) -> Result<(), Box<dyn Error>> {
+    fn make_directories(
+        &self,
+        session: &mut FtpStream,
+        existing_directories: &mut HashMap<String, bool>,
+        path: &str,
+    ) -> Result<(), Box<dyn Error>> {
         let mut current_dir = String::new();
 
         for folder in path.split('/').filter(|f| !f.is_empty()) {
             let next_dir = format!("{}/{}", current_dir, folder);
 
-            if !self.directory_exist(session, &current_dir, &folder)? {
-                session.mkdir(&next_dir)?;
+            // if the directory is not yet in the cache
+            if !existing_directories.contains_key(&next_dir) {
+                // create directory if not already exist
+                if !self.directory_exist(session, &current_dir, &folder)? {
+                    session.mkdir(&next_dir)?;
+                }
+
+                // insert directory into cache
+                existing_directories.insert(next_dir.to_string(), true);
             }
 
             current_dir = next_dir;
@@ -152,7 +165,7 @@ impl FtpSync {
         haystack: &str,
         needle: &str,
     ) -> Result<bool, Box<dyn Error>> {
-        for f in session.list(Some(haystack)).unwrap() {
+        for f in session.list(Some(haystack))? {
             let parts: Vec<&str> = f.split_whitespace().collect();
             let perm = parts[0];
             let name = parts[parts.len() - 1];
