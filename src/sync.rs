@@ -8,6 +8,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use url::Url;
 
 use crate::index::Index;
+use ftp::types::FileType;
 
 pub trait Sync {
     fn synchronize(
@@ -51,6 +52,9 @@ impl Sync for FtpSync {
         if dst.username() != "" {
             ftp_session.login(dst.username(), dst.password().unwrap_or(""))?;
         }
+
+        // set transfert mode to binary
+        ftp_session.transfer_type(FileType::Binary)?;
 
         // setup custom root directory if required
         let remote_dir = if dst.path() != "" { dst.path() } else { "/" };
