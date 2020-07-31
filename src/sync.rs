@@ -11,7 +11,13 @@ use url::Url;
 use crate::index::Index;
 
 pub trait Sync {
-    fn synchronize(&mut self, a: &Index, b: &Index, dry_run: bool) -> Result<(), Box<dyn Error>>;
+    fn synchronize(
+        &mut self,
+        a: &Index,
+        b: &Index,
+        dry_run: bool,
+        assume_directories: bool,
+    ) -> Result<(), Box<dyn Error>>;
 }
 
 /// A synchronizer which save by FTP.
@@ -29,6 +35,7 @@ impl Sync for FtpSync {
         current_index: &Index,
         previous_index: &Index,
         dry_run: bool,
+        assume_directories: bool,
     ) -> Result<(), Box<dyn Error>> {
         // compute diff
         let (changed_files, deleted_files) = previous_index.diff(current_index);
@@ -37,6 +44,27 @@ impl Sync for FtpSync {
 
         if dry_run {
             return Ok(());
+        }
+
+        // If set to true, use the local cache to determinate existing directories
+        // this will greatly reduce upload duration since we do not need to try to create ALL directories.
+        if assume_directories {
+            for (path, _) in current_index.files() {
+                let path = Path::new(&path);
+
+                // remove last component from path (the file)
+                if path.parent().is_none() {
+                    continue;
+                }
+                let path = path.parent().unwrap().to_str().unwrap();
+
+                let mut current_dir = self.remote_dir.clone();
+                for folder in path.split('/').filter(|f| !f.is_empty()) {
+                    current_dir = format!("{}/{}", current_dir, folder);
+                    self.existing_directories
+                        .insert(current_dir.to_string(), true);
+                }
+            }
         }
 
         // create progress bar

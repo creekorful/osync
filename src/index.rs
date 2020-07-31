@@ -136,6 +136,10 @@ impl Index {
     pub fn path(&self) -> PathBuf {
         self.directory.clone()
     }
+
+    pub fn files(&self) -> HashMap<String, String> {
+        self.files.clone()
+    }
 }
 
 /// Allows you to access the index file directory with `[]`
