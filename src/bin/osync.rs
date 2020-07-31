@@ -65,8 +65,15 @@ fn main() {
     println!("Index of {} files computed", current_index.len());
 
     // Synchronize the files
-    let synchronizer = FtpSync {};
-    match synchronizer.synchronize(&current_index, &previous_index, &dst, dry_run) {
+    let mut synchronizer = match FtpSync::new(&dst) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("error while connecting to the server: {}", e);
+            process::exit(1);
+        }
+    };
+
+    match synchronizer.synchronize(&current_index, &previous_index, dry_run) {
         Ok(_) => {
             if dry_run {
                 println!("Synchronization successful! (dry-run)")
