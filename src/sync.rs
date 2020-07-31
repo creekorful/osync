@@ -49,7 +49,7 @@ impl Sync for FtpSync {
         // If set to true, use the local cache to determinate existing directories
         // this will greatly reduce upload duration since we do not need to try to create ALL directories.
         if assume_directories {
-            for (path, _) in current_index.files() {
+            for (path, _) in previous_index.files() {
                 let path = Path::new(&path);
 
                 // remove last component from path (the file)
