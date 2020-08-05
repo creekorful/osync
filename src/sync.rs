@@ -17,6 +17,7 @@ pub trait Sync {
         b: &Index,
         dry_run: bool,
         assume_directories: bool,
+        skip_upload: bool,
     ) -> Result<(), Box<dyn Error>>;
 }
 
@@ -36,6 +37,7 @@ impl Sync for FtpSync {
         previous_index: &Index,
         dry_run: bool,
         assume_directories: bool,
+        skip_upload: bool,
     ) -> Result<(), Box<dyn Error>> {
         // compute diff
         let (changed_files, deleted_files) = previous_index.diff(current_index);
@@ -67,14 +69,16 @@ impl Sync for FtpSync {
             }
         }
 
-        // create progress bar
-        let pb = ProgressBar::new((changed_files.len() + deleted_files.len()) as u64);
-        pb.set_style(ProgressStyle::default_bar().template(
-            "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] ({pos}/{len}, ETA {eta})",
-        ));
+        if !skip_upload {
+            // create progress bar
+            let pb = ProgressBar::new((changed_files.len() + deleted_files.len()) as u64);
+            pb.set_style(ProgressStyle::default_bar().template(
+                "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] ({pos}/{len}, ETA {eta})",
+            ));
 
-        self.process_changed_files(&pb, current_index.path(), &changed_files)?;
-        self.process_deleted_files(&pb, &deleted_files)?;
+            self.process_changed_files(&pb, current_index.path(), &changed_files)?;
+            self.process_deleted_files(&pb, &deleted_files)?;
+        }
 
         // everything is fine, save index to file
         current_index.save()?;
