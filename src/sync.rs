@@ -15,7 +15,6 @@ pub trait Sync {
         &mut self,
         a: &Index,
         b: &Index,
-        dry_run: bool,
         assume_directories: bool,
         skip_upload: bool,
     ) -> Result<(), Box<dyn Error>>;
@@ -35,7 +34,6 @@ impl Sync for FtpSync {
         &mut self,
         current_index: &Index,
         previous_index: &Index,
-        dry_run: bool,
         assume_directories: bool,
         skip_upload: bool,
     ) -> Result<(), Box<dyn Error>> {
@@ -43,10 +41,6 @@ impl Sync for FtpSync {
         let (changed_files, deleted_files) = previous_index.diff(current_index);
         println!("-> {} files changed", changed_files.len());
         println!("-> {} files deleted", deleted_files.len());
-
-        if dry_run {
-            return Ok(());
-        }
 
         // If set to true, use the local cache to determinate existing directories
         // this will greatly reduce upload duration since we do not need to try to create ALL directories.

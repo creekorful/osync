@@ -24,11 +24,6 @@ fn main() {
                 .help("The destination. (f.e: ftp://user:pass@ftp.example.org/test-folder)"),
         )
         .arg(
-            Arg::with_name("dry-run")
-                .long("dry-run")
-                .help("Simulation mode: do not upload files nor update index"),
-        )
-        .arg(
             Arg::with_name("assume-directories")
                 .long("assume-directories")
                 .help("Use the local cache to determinate existing directories"),
@@ -49,7 +44,6 @@ fn main() {
             process::exit(1);
         }
     };
-    let dry_run = matches.is_present("dry-run");
     let assume_directories = matches.is_present("assume-directories");
     let skip_upload = matches.is_present("skip-upload");
 
@@ -88,13 +82,12 @@ fn main() {
     match synchronizer.synchronize(
         &current_index,
         &previous_index,
-        dry_run,
         assume_directories,
         skip_upload,
     ) {
         Ok(_) => {
-            if dry_run {
-                println!("Synchronization successful! (dry-run)")
+            if skip_upload {
+                println!("Synchronization successful! (upload skipped)")
             } else {
                 println!("Synchronization successful!")
             }
