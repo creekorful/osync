@@ -49,7 +49,10 @@ fn main() {
 
     // Read previous index (if any)
     let previous_index = match Index::load(src) {
-        Ok(index) => index,
+        Ok((index, resumed_files)) => {
+            println!("({} files resumed)", resumed_files);
+            index
+        }
         Err(e) => {
             eprintln!("error while reading index: {}", e);
             process::exit(1);
