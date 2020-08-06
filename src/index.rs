@@ -61,6 +61,10 @@ impl Index {
             }
         }
 
+        // do not upload .osync(ignore) files
+        ignored_files.insert(INDEX_FILE.to_string(), true);
+        ignored_files.insert(IGNORE_FILE.to_string(), true);
+
         let mut files: HashMap<String, String> = HashMap::new();
         for entry in WalkDir::new(&directory).into_iter().filter_map(|e| e.ok()) {
             let local_path = entry.path().strip_prefix(&directory)?;
