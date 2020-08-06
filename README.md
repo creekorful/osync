@@ -39,22 +39,3 @@ Or with [snap](https://snapcraft.io).
 ```sh
 snap install osync --classic
 ```
-
-## How to use it
-
-```
-osync 1.2.0
-Aloïs Micard <alois@micard.lu>
-Synchronize efficiently LOT of files to FTP server
-
-USAGE:
-    osync <SRC> <DST>
-
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
-ARGS:
-    <SRC>    The source directory.
-    <DST>    The destination. (f.e: ftp://user:pass@ftp.example.org/test-folder)
-```
