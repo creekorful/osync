@@ -20,32 +20,19 @@ fn main() {
         .arg(
             Arg::with_name("dst")
                 .value_name("DST")
-                .required(true)
                 .help("The destination. (f.e: ftp://user:pass@ftp.example.org/test-folder)"),
         )
         .arg(
             Arg::with_name("assume-directories")
                 .long("assume-directories")
-                .help("Use the local cache to determinate existing directories"),
-        )
-        .arg(
-            Arg::with_name("skip-upload")
-                .long("skip-upload")
-                .help("Only generate .osync cache, dot not upload"),
+                .help("Use the local index to determinate existing directories"),
         )
         .setting(AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
     let src = matches.value_of("src").unwrap();
-    let dst = match matches.value_of("dst").map(|v| Url::parse(v)).unwrap() {
-        Ok(url) => url,
-        Err(e) => {
-            eprintln!("invalid dst: {}", e);
-            process::exit(1);
-        }
-    };
+    let dst = matches.value_of("dst").map(|v| Url::parse(v).unwrap());
     let assume_directories = matches.is_present("assume-directories");
-    let skip_upload = matches.is_present("skip-upload");
 
     // Read previous index (if any)
     let previous_index = match Index::load(src) {
@@ -79,13 +66,8 @@ fn main() {
         }
     };
 
-    match synchronizer.synchronize(
-        &current_index,
-        &previous_index,
-        assume_directories,
-        skip_upload,
-    ) {
-        Ok(_) => {
+    match synchronizer.synchronize(&current_index, &previous_index, assume_directories) {
+        Ok(skip_upload) => {
             if skip_upload {
                 println!("Synchronization successful! (upload skipped)")
             } else {

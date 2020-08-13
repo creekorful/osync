@@ -16,13 +16,15 @@ pub trait Sync {
         a: &Index,
         b: &Index,
         assume_directories: bool,
-        skip_upload: bool,
-    ) -> Result<(), Box<dyn Error>>;
+    ) -> Result<bool, Box<dyn Error>>;
 }
 
 /// A synchronizer which save by FTP.
+#[derive(Default)]
 pub struct FtpSync {
-    ftp_session: FtpStream,
+    // the FTP session
+    // if none it means that we are running with --skip-upload
+    ftp_session: Option<FtpStream>,
     remote_dir: String,
     // create a local cache of existing directories
     // so that we won't waste time trying to create them again
@@ -35,8 +37,7 @@ impl Sync for FtpSync {
         current_index: &Index,
         previous_index: &Index,
         assume_directories: bool,
-        skip_upload: bool,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<bool, Box<dyn Error>> {
         // compute diff
         let (changed_files, deleted_files) = previous_index.diff(current_index);
         println!("-> {} files changed", changed_files.len());
@@ -63,7 +64,7 @@ impl Sync for FtpSync {
             }
         }
 
-        if !skip_upload {
+        if self.ftp_session.is_some() {
             // create progress bar
             let pb = ProgressBar::new((changed_files.len() + deleted_files.len()) as u64);
             pb.set_style(ProgressStyle::default_bar().template(
@@ -77,30 +78,39 @@ impl Sync for FtpSync {
         // everything is fine, save index to file
         current_index.save()?;
 
-        Ok(())
+        Ok(self.ftp_session.is_none())
     }
 }
 
 impl FtpSync {
-    pub fn new(dst: &Url) -> Result<FtpSync, Box<dyn Error>> {
-        // open FTP connection
-        let address = format!(
-            "{}:{}",
-            dst.host_str().expect("missing address"),
-            dst.port().unwrap_or(21)
-        );
-        let mut ftp_session = FtpStream::connect(address)?;
+    pub fn new(dst: &Option<Url>) -> Result<FtpSync, Box<dyn Error>> {
+        let mut ftp_session = None;
+        let mut remote_dir = "";
 
-        // authenticate if required
-        if dst.username() != "" {
-            ftp_session.login(dst.username(), dst.password().unwrap_or(""))?;
+        // If an URL is provided
+        if let Some(dst) = dst {
+            // open FTP connection
+            let address = format!(
+                "{}:{}",
+                dst.host_str().expect("missing address"),
+                dst.port().unwrap_or(21)
+            );
+
+            let mut session = FtpStream::connect(address)?;
+
+            // authenticate if required
+            if dst.username() != "" {
+                session.login(dst.username(), dst.password().unwrap_or(""))?;
+            }
+
+            // set transfer mode to binary
+            session.transfer_type(FileType::Binary)?;
+
+            ftp_session = Some(session);
+
+            // setup custom root directory if required
+            remote_dir = if dst.path() != "" { dst.path() } else { "/" };
         }
-
-        // set transfer mode to binary
-        ftp_session.transfer_type(FileType::Binary)?;
-
-        // setup custom root directory if required
-        let remote_dir = if dst.path() != "" { dst.path() } else { "/" };
 
         Ok(FtpSync {
             ftp_session,
@@ -126,6 +136,8 @@ impl FtpSync {
             // store the file on the server
             let mut content = File::open(local_dir.as_ref().join(path))?;
             self.ftp_session
+                .as_mut()
+                .unwrap()
                 .put(&format!("{}/{}", &self.remote_dir, path), &mut content)?;
 
             progress_bar.println(format!("[+] {}", path));
@@ -141,6 +153,8 @@ impl FtpSync {
     ) -> Result<(), Box<dyn Error>> {
         for file in files {
             self.ftp_session
+                .as_mut()
+                .unwrap()
                 .rm(&format!("{}/{}", &self.remote_dir, file))?;
 
             progress_bar.println(format!("[-] {}", file));
@@ -162,7 +176,7 @@ impl FtpSync {
             if !self.existing_directories.contains_key(&next_dir) {
                 // create directory if not already exist
                 if !self.directory_exist(&current_dir, &folder)? {
-                    self.ftp_session.mkdir(&next_dir)?;
+                    self.ftp_session.as_mut().unwrap().mkdir(&next_dir)?;
                 }
 
                 // insert directory into cache
@@ -176,7 +190,7 @@ impl FtpSync {
     }
 
     fn directory_exist(&mut self, haystack: &str, needle: &str) -> Result<bool, Box<dyn Error>> {
-        for f in self.ftp_session.list(Some(haystack))? {
+        for f in self.ftp_session.as_mut().unwrap().list(Some(haystack))? {
             let parts: Vec<&str> = f.split_whitespace().collect();
             let perm = parts[0];
             let name = parts[parts.len() - 1];
