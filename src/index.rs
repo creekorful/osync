@@ -212,8 +212,8 @@ mod tests {
 
         // re compute index
         let (index, ignored) = Index::compute(&dir).expect("unable to compute index");
-        assert_eq!(index.len(), 1); // the .osyncignore file
-        assert_eq!(ignored, 1);
+        assert_eq!(index.len(), 0);
+        assert_eq!(ignored, 3); // the .osyncignore/.osync files
     }
 
     #[test]
@@ -233,7 +233,7 @@ mod tests {
         let (current_index, _) = Index::compute(&dir).expect("unable to compute index");
 
         let (changed_files, deleted_files) = previous_index.diff(&current_index);
-        assert_eq!(changed_files.len(), 1); // TODO fix this (.osync is always returned)
+        assert_eq!(changed_files.len(), 0);
         assert!(deleted_files.is_empty());
     }
 }
