@@ -37,5 +37,5 @@ cargo install osync
 Or with [snap](https://snapcraft.io).
 
 ```sh
-snap install osync --classic
+snap install osync
 ```

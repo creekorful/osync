@@ -8,7 +8,7 @@ description: |
 license: GPL-3.0
 
 grade: stable
-confinement: classic
+confinement: strict
 
 parts:
   osync:
@@ -20,3 +20,7 @@ parts:
 apps:
   osync:
     command: bin/osync
+    plugs:
+      - home
+      - removable-media
+      - network
