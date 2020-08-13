@@ -1,6 +1,6 @@
 [package]
 name = "osync"
-version = "1.3.2"
+version = "1.4.0"
 authors = ["Aloïs Micard <alois@micard.lu>"]
 edition = "2018"
 description = "Tool to synchronize in a optimized way a LOT of files to a FTP server"
