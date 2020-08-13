@@ -20,7 +20,6 @@ pub trait Sync {
 }
 
 /// A synchronizer which save by FTP.
-#[derive(Default)]
 pub struct FtpSync {
     // the FTP session
     // if none it means that we are running with --skip-upload
