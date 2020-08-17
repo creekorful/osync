@@ -1,6 +1,7 @@
 # osync
 
 ![Crates.io](https://img.shields.io/crates/v/osync)
+[![osync](https://snapcraft.io//osync/badge.svg)](https://snapcraft.io/osync)
 
 Tool to synchronize in a optimized way a **LOT** of files to a FTP server.
 
