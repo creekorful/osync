@@ -13,8 +13,8 @@ use crate::index::Index;
 pub trait Sync {
     fn synchronize(
         &mut self,
-        a: &Index,
-        b: &Index,
+        current_index: &Index,
+        previous_index: &mut Index,
         assume_directories: bool,
     ) -> Result<bool, Box<dyn Error>>;
 }
@@ -34,7 +34,7 @@ impl Sync for FtpSync {
     fn synchronize(
         &mut self,
         current_index: &Index,
-        previous_index: &Index,
+        previous_index: &mut Index,
         assume_directories: bool,
     ) -> Result<bool, Box<dyn Error>> {
         // compute diff
@@ -45,7 +45,7 @@ impl Sync for FtpSync {
         // If set to true, use the local cache to determinate existing directories
         // this will greatly reduce upload duration since we do not need to try to create ALL directories.
         if assume_directories {
-            for (path, _) in previous_index.files() {
+            for path in previous_index.files().keys() {
                 let path = Path::new(&path);
 
                 // remove last component from path (the file)
@@ -70,8 +70,8 @@ impl Sync for FtpSync {
                 "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] ({pos}/{len}, ETA {eta})",
             ));
 
-            self.process_changed_files(&pb, current_index.path(), &changed_files)?;
-            self.process_deleted_files(&pb, &deleted_files)?;
+            self.process_changed_files(&pb, previous_index, &changed_files)?;
+            self.process_deleted_files(&pb, previous_index, &deleted_files)?;
         }
 
         // everything is fine, save index to file
@@ -118,10 +118,10 @@ impl FtpSync {
         })
     }
 
-    fn process_changed_files<P: AsRef<Path>>(
+    fn process_changed_files(
         &mut self,
         progress_bar: &ProgressBar,
-        local_dir: P,
+        previous_index: &mut Index,
         files: &[String],
     ) -> Result<(), Box<dyn Error>> {
         for path in files {
@@ -133,11 +133,13 @@ impl FtpSync {
             self.make_directories(&format!("{}/{}", &self.remote_dir, parent))?;
 
             // store the file on the server
-            let mut content = File::open(local_dir.as_ref().join(path))?;
+            let mut content = File::open(previous_index.path().join(path))?;
             self.ftp_session
                 .as_mut()
                 .unwrap()
                 .put(&format!("{}/{}", &self.remote_dir, path), &mut content)?;
+            previous_index.update(&path)?;
+            previous_index.save()?;
 
             progress_bar.println(format!("[+] {}", path));
             progress_bar.inc(1);
@@ -148,15 +150,18 @@ impl FtpSync {
     fn process_deleted_files(
         &mut self,
         progress_bar: &ProgressBar,
+        previous_index: &mut Index,
         files: &[String],
     ) -> Result<(), Box<dyn Error>> {
-        for file in files {
+        for path in files {
             self.ftp_session
                 .as_mut()
                 .unwrap()
-                .rm(&format!("{}/{}", &self.remote_dir, file))?;
+                .rm(&format!("{}/{}", &self.remote_dir, path))?;
+            previous_index.remove(path)?;
+            previous_index.save()?;
 
-            progress_bar.println(format!("[-] {}", file));
+            progress_bar.println(format!("[-] {}", path));
             progress_bar.inc(1);
         }
 

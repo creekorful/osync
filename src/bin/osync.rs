@@ -35,7 +35,7 @@ fn main() {
     let assume_directories = matches.is_present("assume-directories");
 
     // Read previous index (if any)
-    let previous_index = match Index::load(src) {
+    let mut previous_index = match Index::load(src) {
         Ok(index) => index,
         Err(e) => {
             eprintln!("error while reading index: {}", e);
@@ -66,7 +66,7 @@ fn main() {
         }
     };
 
-    match synchronizer.synchronize(&current_index, &previous_index, assume_directories) {
+    match synchronizer.synchronize(&current_index, &mut previous_index, assume_directories) {
         Ok(skip_upload) => {
             if skip_upload {
                 println!("Synchronization successful! (upload skipped)")

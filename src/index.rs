@@ -141,8 +141,24 @@ impl Index {
         self.directory.clone()
     }
 
-    pub fn files(&self) -> HashMap<String, String> {
-        self.files.clone()
+    pub fn files(&self) -> &HashMap<String, String> {
+        &self.files
+    }
+
+    pub fn update(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
+        let bytes = fs::read(self.directory.join(path))?;
+
+        let mut hasher = sha1::Sha1::new();
+        hasher.update(bytes);
+
+        self.files
+            .insert(path.to_string(), format!("{:x}", hasher.finalize()));
+        Ok(())
+    }
+
+    pub fn remove(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
+        self.files.remove(path);
+        Ok(())
     }
 }
 
