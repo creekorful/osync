@@ -13,7 +13,7 @@ repository = "https://github.com/creekorful/osync"
 sha-1 = "0.9.4"
 ftp = "3.0.1"
 clap = "2.33.1"
-walkdir = "2.3.1"
+walkdir = "2.3.2"
 url = "2.2.1"
 indicatif = "0.15.0"
 
